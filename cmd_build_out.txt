@@ -1,0 +1,49 @@
+
+> spendmapr@0.1.0 build
+> next build
+
+   ▲ Next.js 15.2.3
+   - Environments: .env.local
+   - Experiments (use with caution):
+     ✓ typedRoutes
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully
+   Linting and checking validity of types ...
+   Collecting page data ...
+   Generating static pages (0/18) ...
+   Generating static pages (4/18) 
+   Generating static pages (8/18) 
+   Generating static pages (13/18) 
+ ✓ Generating static pages (18/18)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                                 Size  First Load JS
+┌ ƒ /                                      153 B         101 kB
+├ ○ /_not-found                            986 B         102 kB
+├ ƒ /api/cron/banking-sync                 153 B         101 kB
+├ ƒ /api/investments/history               153 B         101 kB
+├ ƒ /api/truelayer/callback                153 B         101 kB
+├ ƒ /api/truelayer/link                    153 B         101 kB
+├ ƒ /api/truelayer/sync                    153 B         101 kB
+├ ƒ /auth/callback                         153 B         101 kB
+├ ƒ /banking                             2.37 kB         106 kB
+├ ƒ /dashboard                           1.31 kB         207 kB
+├ ƒ /debt-tracker                         3.4 kB         108 kB
+├ ƒ /examples/server-transactions          172 B         104 kB
+├ ƒ /goals                               2.63 kB         107 kB
+├ ƒ /investments                         12.1 kB         217 kB
+├ ƒ /login                                 949 B         102 kB
+└ ƒ /transactions                        3.54 kB         108 kB
++ First Load JS shared by all             101 kB
+  ├ chunks/4bd1b696-be379d26a5799e14.js  53.3 kB
+  ├ chunks/684-b4548f801bbe2e53.js       45.8 kB
+  └ other shared chunks (total)          2.03 kB
+
+
+ƒ Middleware                             85.4 kB
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+

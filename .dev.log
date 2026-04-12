@@ -1,0 +1,43 @@
+
+> spendmapr@0.1.0 dev
+> next dev
+
+   ▲ Next.js 15.2.3
+   - Local:        http://localhost:3000
+   - Network:      http://10.2.0.2:3000
+   - Environments: .env.local
+   - Experiments (use with caution):
+     ✓ typedRoutes
+
+ ✓ Starting...
+ ✓ Ready in 1709ms
+ ✓ Compiled /middleware in 378ms (153 modules)
+ ○ Compiling /dashboard ...
+ ✓ Compiled /dashboard in 3s (1857 modules)
+ GET /dashboard 200 in 2180ms
+ ○ Compiling /investments ...
+ ✓ Compiled /investments in 1147ms (2100 modules)
+ GET /investments 200 in 1614ms
+ GET /dashboard 200 in 405ms
+ GET /investments 200 in 100ms
+ ✓ Compiled in 5.3s (2114 modules)
+ ○ Compiling /_error ...
+ ✓ Compiled /_error in 3.9s (2429 modules)
+ GET /investments 500 in 5378ms
+ GET /investments 500 in 783ms
+ GET /investments 500 in 424ms
+ GET /investments 500 in 451ms
+ ✓ Compiled in 410ms (2443 modules)
+ GET /investments 500 in 932ms
+ ○ Compiling / ...
+ ✓ Compiled / in 1467ms (2448 modules)
+ GET / 307 in 1883ms
+ ✓ Compiled in 596ms (1081 modules)
+ GET /dashboard 200 in 639ms
+ ○ Compiling /transactions ...
+ ✓ Compiled /transactions in 879ms (2452 modules)
+ GET /transactions 200 in 1213ms
+ GET /investments 500 in 712ms
+ GET /investments 500 in 457ms
+ GET /transactions 200 in 274ms
+ GET /dashboard 200 in 205ms

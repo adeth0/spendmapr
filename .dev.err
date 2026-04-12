@@ -1,0 +1,115 @@
+ ⨯ TypeError: yahoo_finance2__WEBPACK_IMPORTED_MODULE_0__.default.getFinancialData is not a function
+    at eval (lib\investments.ts:27:27)
+    at <unknown> (rsc)/./lib/investments.ts (E:\Applications\SpendMapr\.next\server\app\investments\page.js:132:1)
+    at __webpack_require__ (E:\Applications\SpendMapr\.next\server\webpack-runtime.js:33:43)
+    at eval (webpack-internal:///(rsc)/./app/investments/page.tsx:9:74)
+    at <unknown> (rsc)/./app/investments/page.tsx (E:\Applications\SpendMapr\.next\server\app\investments\page.js:33:1)
+    at __webpack_require__ (E:\Applications\SpendMapr\.next\server\webpack-runtime.js:33:43)
+  25 | ] as const;
+  26 |
+> 27 | const yahoo = yahooFinance.getFinancialData();
+     |                           ^
+  28 |
+  29 | async function fetchAsset(asset: (typeof ASSETS)[number]): Promise<InvestmentAsset> {
+  30 |   const [quote, history] = await Promise.all([ {
+  page: '/investments'
+}
+ ⨯ TypeError: yahoo_finance2__WEBPACK_IMPORTED_MODULE_0__.default.getFinancialData is not a function
+    at eval (lib\investments.ts:27:27)
+    at <unknown> (rsc)/./lib/investments.ts (E:\Applications\SpendMapr\.next\server\app\investments\page.js:132:1)
+    at __webpack_require__ (E:\Applications\SpendMapr\.next\server\webpack-runtime.js:33:43)
+    at eval (webpack-internal:///(rsc)/./app/investments/page.tsx:9:74)
+    at <unknown> (rsc)/./app/investments/page.tsx (E:\Applications\SpendMapr\.next\server\app\investments\page.js:33:1)
+    at __webpack_require__ (E:\Applications\SpendMapr\.next\server\webpack-runtime.js:33:43)
+  25 | ] as const;
+  26 |
+> 27 | const yahoo = yahooFinance.getFinancialData();
+     |                           ^
+  28 |
+  29 | async function fetchAsset(asset: (typeof ASSETS)[number]): Promise<InvestmentAsset> {
+  30 |   const [quote, history] = await Promise.all([ {
+  page: '/investments'
+}
+ ⨯ TypeError: yahoo_finance2__WEBPACK_IMPORTED_MODULE_0__.default.getFinancialData is not a function
+    at eval (lib\investments.ts:27:27)
+    at <unknown> (rsc)/./lib/investments.ts (E:\Applications\SpendMapr\.next\server\app\investments\page.js:132:1)
+    at __webpack_require__ (E:\Applications\SpendMapr\.next\server\webpack-runtime.js:33:43)
+    at eval (webpack-internal:///(rsc)/./app/investments/page.tsx:9:74)
+    at <unknown> (rsc)/./app/investments/page.tsx (E:\Applications\SpendMapr\.next\server\app\investments\page.js:33:1)
+    at __webpack_require__ (E:\Applications\SpendMapr\.next\server\webpack-runtime.js:33:43)
+  25 | ] as const;
+  26 |
+> 27 | const yahoo = yahooFinance.getFinancialData();
+     |                           ^
+  28 |
+  29 | async function fetchAsset(asset: (typeof ASSETS)[number]): Promise<InvestmentAsset> {
+  30 |   const [quote, history] = await Promise.all([ {
+  page: '/investments'
+}
+ ⨯ TypeError: yahoo_finance2__WEBPACK_IMPORTED_MODULE_0__.default.getFinancialData is not a function
+    at eval (lib\investments.ts:27:27)
+    at <unknown> (rsc)/./lib/investments.ts (E:\Applications\SpendMapr\.next\server\app\investments\page.js:132:1)
+    at __webpack_require__ (E:\Applications\SpendMapr\.next\server\webpack-runtime.js:33:43)
+    at eval (webpack-internal:///(rsc)/./app/investments/page.tsx:9:74)
+    at <unknown> (rsc)/./app/investments/page.tsx (E:\Applications\SpendMapr\.next\server\app\investments\page.js:33:1)
+    at __webpack_require__ (E:\Applications\SpendMapr\.next\server\webpack-runtime.js:33:43)
+  25 | ] as const;
+  26 |
+> 27 | const yahoo = yahooFinance.getFinancialData();
+     |                           ^
+  28 |
+  29 | async function fetchAsset(asset: (typeof ASSETS)[number]): Promise<InvestmentAsset> {
+  30 |   const [quote, history] = await Promise.all([ {
+  page: '/investments'
+}
+ ⨯ TypeError: yahoo_finance2__WEBPACK_IMPORTED_MODULE_0__.default.getFinancialData is not a function
+    at eval (lib\investments.ts:27:27)
+    at <unknown> (rsc)/./lib/investments.ts (E:\Applications\SpendMapr\.next\server\app\investments\page.js:132:1)
+    at __webpack_require__ (E:\Applications\SpendMapr\.next\server\webpack-runtime.js:33:43)
+    at eval (webpack-internal:///(rsc)/./app/investments/page.tsx:9:74)
+    at <unknown> (rsc)/./app/investments/page.tsx (E:\Applications\SpendMapr\.next\server\app\investments\page.js:33:1)
+    at __webpack_require__ (E:\Applications\SpendMapr\.next\server\webpack-runtime.js:33:43)
+  25 | ] as const;
+  26 |
+> 27 | const yahoo = yahooFinance.getFinancialData();
+     |                           ^
+  28 |
+  29 | async function fetchAsset(asset: (typeof ASSETS)[number]): Promise<InvestmentAsset> {
+  30 |   const [quote, history] = await Promise.all([ {
+  page: '/investments'
+}
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ⨯ TypeError: yahoo_finance2__WEBPACK_IMPORTED_MODULE_0__.default.getFinancialData is not a function
+    at eval (lib\investments.ts:27:27)
+    at <unknown> (rsc)/./lib/investments.ts (E:\Applications\SpendMapr\.next\server\app\investments\page.js:132:1)
+    at __webpack_require__ (E:\Applications\SpendMapr\.next\server\webpack-runtime.js:33:43)
+    at eval (webpack-internal:///(rsc)/./app/investments/page.tsx:9:74)
+    at <unknown> (rsc)/./app/investments/page.tsx (E:\Applications\SpendMapr\.next\server\app\investments\page.js:33:1)
+    at __webpack_require__ (E:\Applications\SpendMapr\.next\server\webpack-runtime.js:33:43)
+  25 | ] as const;
+  26 |
+> 27 | const yahoo = yahooFinance.getFinancialData();
+     |                           ^
+  28 |
+  29 | async function fetchAsset(asset: (typeof ASSETS)[number]): Promise<InvestmentAsset> {
+  30 |   const [quote, history] = await Promise.all([ {
+  page: '/investments'
+}
+ ⨯ TypeError: yahoo_finance2__WEBPACK_IMPORTED_MODULE_0__.default.getFinancialData is not a function
+    at eval (lib\investments.ts:27:27)
+    at <unknown> (rsc)/./lib/investments.ts (E:\Applications\SpendMapr\.next\server\app\investments\page.js:132:1)
+    at __webpack_require__ (E:\Applications\SpendMapr\.next\server\webpack-runtime.js:33:43)
+    at eval (webpack-internal:///(rsc)/./app/investments/page.tsx:9:74)
+    at <unknown> (rsc)/./app/investments/page.tsx (E:\Applications\SpendMapr\.next\server\app\investments\page.js:33:1)
+    at __webpack_require__ (E:\Applications\SpendMapr\.next\server\webpack-runtime.js:33:43)
+  25 | ] as const;
+  26 |
+> 27 | const yahoo = yahooFinance.getFinancialData();
+     |                           ^
+  28 |
+  29 | async function fetchAsset(asset: (typeof ASSETS)[number]): Promise<InvestmentAsset> {
+  30 |   const [quote, history] = await Promise.all([ {
+  page: '/investments'
+}
+^C^C
