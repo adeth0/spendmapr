@@ -103,16 +103,43 @@ spendmapr/
 
 ## Deployment
 
-SpendMapr is designed to be deployed as a static site. The easiest way is to use GitHub Pages:
+SpendMapr is designed to be deployed as a static site. The easiest way is to use GitHub Pages with automatic deployment:
 
-1. Build the project:
+### Automatic Deployment (Recommended)
+
+1. **Push to GitHub**:
+   ```bash
+   git add .
+   git commit -m "Deploy to GitHub Pages"
+   git push origin main
+   ```
+
+2. **GitHub Actions will automatically**:
+   - Build the project using `npm run build`
+   - Deploy to GitHub Pages
+   - Serve from the `dist/` directory
+
+3. **Configure GitHub Pages**:
+   - Go to repository **Settings** → **Pages**
+   - Under **Source**, select **GitHub Actions**
+   - Your site will be available at `https://your-username.github.io/spendmapr`
+
+### Manual Deployment
+
+1. **Build the project**:
    ```bash
    npm run build
    ```
 
-2. Push the `dist/` folder to GitHub (or use GitHub Actions)
+2. **Configure GitHub Pages**:
+   - Go to repository **Settings** → **Pages**
+   - Select **Deploy from a branch**
+   - Choose **main** branch and **/(root)** folder
+   - Click **Save**
 
-3. Configure GitHub Pages to serve from the `dist/` directory
+3. **Add 404.html** (for SPA routing):
+   - The `dist/404.html` file is automatically created during build
+   - This handles client-side routing for GitHub Pages
 
 See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed deployment instructions.
 
