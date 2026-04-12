@@ -1,5 +1,37 @@
-.next
+# Dependencies
 node_modules
-.env.local
+
+# Build output
 dist
+.next
+
+# Environment variables
+.env.local
+.env.production
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Testing
 coverage
+
+# Build artifacts
+*.tsbuildinfo
+next-env.d.ts
+
+# Vite
+.vite
