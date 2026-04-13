@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useProfile } from '../contexts/ProfileContext';
 import { useNavigate } from 'react-router-dom';
 import {
   TrendingUp, Target, CreditCard, Building2,
   ArrowUpRight, ArrowRight, ChevronRight,
 } from 'lucide-react';
 import { getGoals, getDebts, type GoalRow, type DebtRow } from '../lib/db';
+import { CreditScoreCard } from '../components/CreditScoreCard';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -33,6 +35,7 @@ function greeting() {
 
 export function Dashboard() {
   const { user, isDemoMode } = useAuth();
+  const { profile } = useProfile();
   const navigate = useNavigate();
 
   const [goals,       setGoals]       = useState<GoalRow[]>([]);
@@ -289,6 +292,19 @@ export function Dashboard() {
             })}
           </div>
         </div>
+
+        {/* ── Credit score + insights ─────────────────────────────────────────── */}
+        {!loading && (
+          <CreditScoreCard
+            compact
+            profile={profile}
+            totalDebt={totalDebt}
+            totalLimit={debts.reduce((s, d) => s + d.original_amount, 0)}
+            debtCount={debts.length}
+            totalBalance={totalBalance}
+            totalInvestments={totalInvestments}
+          />
+        )}
 
       </div>
     </div>

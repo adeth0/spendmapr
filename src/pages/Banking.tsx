@@ -1,5 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
-import { Building2, Plus, Trash2, X, Wallet, CreditCard, PiggyBank } from 'lucide-react';
+import { Building2, Plus, Trash2, X, Wallet, CreditCard, PiggyBank, Loader2, Unplug, ArrowDown, ArrowUp } from 'lucide-react';
+import {
+  simulateConnect, disconnect, isConnected,
+  getMockAccounts, getMockTransactions,
+  CATEGORY_COLORS,
+  type ConnectedAccount, type BankTransaction,
+} from '../lib/bankingService';
 
 interface Account {
   id: string; name: string; type: string; balance: number; institution: string;
@@ -44,6 +50,36 @@ export function Banking() {
   const totalBalance = accounts.reduce((s, a) => s + a.balance, 0);
   const posBalance   = accounts.filter(a => a.balance >= 0).reduce((s, a) => s + a.balance, 0);
   const negBalance   = accounts.filter(a => a.balance <  0).reduce((s, a) => s + a.balance, 0);
+
+  // ── Open Banking state ────────────────────────────────────────────────────
+  const [obConnected,   setObConnected]   = useState(isConnected);
+  const [obAccounts,    setObAccounts]    = useState<ConnectedAccount[]>(getMockAccounts);
+  const [obTxns,        setObTxns]        = useState<BankTransaction[]>(getMockTransactions);
+  const [obConnecting,  setObConnecting]  = useState(false);
+  const [obShowTxns,    setObShowTxns]    = useState(false);
+
+  const handleObConnect = async () => {
+    setObConnecting(true);
+    try {
+      const accs = await simulateConnect();
+      setObAccounts(accs);
+      setObTxns(getMockTransactions());
+      setObConnected(true);
+    } finally {
+      setObConnecting(false);
+    }
+  };
+
+  const handleObDisconnect = () => {
+    disconnect();
+    setObAccounts([]);
+    setObTxns([]);
+    setObConnected(false);
+    setObShowTxns(false);
+  };
+
+  const fmtTxnDate = (iso: string) =>
+    new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
 
   return (
     <div className="page-shell">
@@ -136,29 +172,125 @@ export function Banking() {
           </div>
         )}
 
-        {/* Open Banking coming soon */}
-        <div className="panel p-5">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="h-10 w-10 rounded-xl flex items-center justify-center flex-shrink-0"
-              style={{ background: 'var(--accent)' }}>
-              <Building2 size={18} className="text-white" />
+        {/* ── Open Banking ────────────────────────────────────────────────────── */}
+        <div className="panel p-5 space-y-4">
+          {/* Header */}
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                style={{ background: obConnected ? 'rgba(34,197,94,0.12)' : 'rgba(59,130,246,0.12)' }}>
+                <Building2 size={18} style={{ color: obConnected ? '#22c55e' : 'var(--accent)' }} />
+              </div>
+              <div>
+                <p className="font-semibold text-white text-sm">Open Banking</p>
+                <p className="text-xs" style={{ color: obConnected ? '#22c55e' : 'var(--text-3)' }}>
+                  {obConnected ? 'Connected via TrueLayer (demo)' : 'Automatic bank sync via TrueLayer'}
+                </p>
+              </div>
             </div>
+            {obConnected && (
+              <button
+                onClick={handleObDisconnect}
+                className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition-colors"
+                style={{ color: 'var(--text-3)', background: 'var(--bg-raised)' }}
+                onMouseEnter={e => (e.currentTarget.style.color = 'var(--red)')}
+                onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-3)')}
+              >
+                <Unplug size={12} /> Disconnect
+              </button>
+            )}
+          </div>
+
+          {/* Connected: account tiles */}
+          {obConnected && obAccounts.length > 0 && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {obAccounts.map(acc => (
+                <div key={acc.id} className="rounded-xl p-4 space-y-2"
+                  style={{ background: 'var(--bg-raised)', border: '1px solid var(--border)' }}>
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-medium" style={{ color: 'var(--text-3)' }}>
+                      {acc.providerLabel} · {acc.accountType}
+                    </p>
+                    {acc.last4 && (
+                      <span className="badge-muted">•••• {acc.last4}</span>
+                    )}
+                  </div>
+                  <p className="text-lg font-bold text-white">{fmt(acc.balance)}</p>
+                  <p className="text-xs" style={{ color: 'var(--text-3)' }}>{acc.displayName}</p>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Connected: recent transactions toggle */}
+          {obConnected && (
             <div>
-              <p className="font-semibold text-white text-sm">Open Banking</p>
-              <p className="text-xs" style={{ color: 'var(--text-3)' }}>Automatic bank sync — coming soon</p>
+              <button
+                onClick={() => setObShowTxns(v => !v)}
+                className="flex items-center gap-1.5 text-xs font-semibold w-full justify-between px-1 py-1 transition-opacity hover:opacity-70"
+                style={{ color: 'var(--text-2)' }}
+              >
+                <span>Recent transactions ({obTxns.length})</span>
+                <span style={{ color: 'var(--text-3)' }}>{obShowTxns ? '▲ Hide' : '▼ Show'}</span>
+              </button>
+
+              {obShowTxns && (
+                <div className="mt-2 space-y-1">
+                  {obTxns.map(txn => {
+                    const isCredit = txn.amount > 0;
+                    const color    = CATEGORY_COLORS[txn.category] ?? 'var(--text-3)';
+                    return (
+                      <div key={txn.id}
+                        className="flex items-center justify-between px-3 py-2.5 rounded-xl"
+                        style={{ background: 'var(--bg-raised)' }}>
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="h-7 w-7 rounded-lg flex items-center justify-center flex-shrink-0"
+                            style={{ background: `${color}18` }}>
+                            {isCredit
+                              ? <ArrowDown size={13} style={{ color }} />
+                              : <ArrowUp   size={13} style={{ color }} />}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-white truncate">{txn.merchant}</p>
+                            <p className="text-xs" style={{ color: 'var(--text-3)' }}>
+                              {txn.category} · {fmtTxnDate(txn.date)}
+                            </p>
+                          </div>
+                        </div>
+                        <p className="text-sm font-semibold flex-shrink-0 ml-3"
+                          style={{ color: isCredit ? '#22c55e' : 'var(--text-1)' }}>
+                          {isCredit ? '+' : ''}{fmt(txn.amount)}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
-          </div>
-          <p className="text-sm mb-4" style={{ color: 'var(--text-2)' }}>
-            Connect your bank securely using Open Banking (FCA regulated) to automatically sync transactions and balances.
-          </p>
-          <div className="flex flex-wrap gap-2 mb-4">
-            {['Barclays','HSBC','Lloyds','NatWest','Starling','Monzo','Chase','Halifax'].map(bank => (
-              <span key={bank} className="badge-muted">{bank}</span>
-            ))}
-          </div>
-          <button disabled className="apple-button-secondary opacity-40 cursor-not-allowed">
-            Coming soon
-          </button>
+          )}
+
+          {/* Not connected: connect prompt */}
+          {!obConnected && (
+            <>
+              <p className="text-sm" style={{ color: 'var(--text-2)' }}>
+                Connect your bank securely using Open Banking (FCA regulated) to automatically sync transactions and balances.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {['Barclays','HSBC','Lloyds','NatWest','Starling','Monzo','Chase','Halifax'].map(bank => (
+                  <span key={bank} className="badge-muted">{bank}</span>
+                ))}
+              </div>
+              <button
+                onClick={handleObConnect}
+                disabled={obConnecting}
+                className="apple-button-primary disabled:opacity-60"
+              >
+                {obConnecting
+                  ? <><Loader2 size={15} className="animate-spin" /> Connecting…</>
+                  : <><Building2 size={15} /> Connect with Monzo (Demo)</>}
+              </button>
+            </>
+          )}
         </div>
 
       </div>

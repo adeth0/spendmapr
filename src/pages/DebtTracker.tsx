@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
-import { CreditCard, Plus, Trash2, X, Pencil, Loader2, AlertCircle } from 'lucide-react';
+import { CreditCard, Plus, Trash2, X, Pencil, Loader2, AlertCircle, TrendingUp } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { useProfile } from '../contexts/ProfileContext';
 import { getDebts, insertDebt, patchDebt, removeDebt, type DebtRow } from '../lib/db';
+import { calculateCreditScore, debtScoreImpact } from '../lib/creditScoreService';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Debt {
@@ -53,6 +55,7 @@ function SkeletonCard() {
 // ─── Component ────────────────────────────────────────────────────────────────
 export function DebtTracker() {
   const { user, isDemoMode } = useAuth();
+  const { profile }          = useProfile();
   const [debts,    setDebts]    = useState<Debt[]>([]);
   const [loading,  setLoading]  = useState(true);
   const [dbError,  setDbError]  = useState<string | null>(null);
@@ -132,6 +135,15 @@ export function DebtTracker() {
 
   const totalRemaining = debts.reduce((s, d) => s + d.remaining,      0);
   const totalMonthly   = debts.reduce((s, d) => s + d.monthlyPayment, 0);
+
+  // ── Credit score context for per-debt impact indicators ──────────────────
+  const creditInput = {
+    monthlyIncome:    profile?.monthly_income ?? 0,
+    totalDebt:        totalRemaining,
+    totalCreditLimit: debts.reduce((s, d) => s + d.totalAmount, 0),
+    debtCount:        debts.length,
+  };
+  const baseScore = calculateCreditScore(creditInput).score;
 
   return (
     <div className="page-shell">
@@ -255,6 +267,25 @@ export function DebtTracker() {
                       </div>
                     )}
                   </div>
+
+                  {/* Credit impact indicator */}
+                  {(() => {
+                    const impact = debtScoreImpact(
+                      { remaining: debt.remaining, totalAmount: debt.totalAmount },
+                      creditInput,
+                    );
+                    if (impact <= 0) return null;
+                    return (
+                      <div
+                        className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium"
+                        style={{ background: 'rgba(34,197,94,0.08)', color: '#22c55e' }}
+                      >
+                        <TrendingUp size={11} />
+                        +{impact} pts credit score if paid off
+                        <span className="ml-auto opacity-60">from {baseScore}</span>
+                      </div>
+                    );
+                  })()}
                 </div>
               );
             })}
