@@ -8,7 +8,7 @@ interface AuthContextType {
   isLoading: boolean;
   error: string | null;
   signInWithGoogle: () => Promise<void>;
-  signInWithMicrosoft: () => Promise<void>;
+  signInWithMagicLink: (email: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
   isConfigured: boolean;
   isDemoMode: boolean;
@@ -53,7 +53,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [isDemoMode]);
 
   const getRedirectURL = () => {
-    // Use the live domain in production, localhost in development
     const origin = typeof window !== 'undefined' ? window.location.origin : 'https://spend.kavauralabs.com';
     return `${origin}/auth/callback`;
   };
@@ -80,41 +79,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           access_type: 'offline',
           prompt: 'consent',
         },
-        skipBrowserRedirect: false,
       },
     });
 
-    if (error) {
-      setError(error.message);
-    }
+    if (error) setError(error.message);
   };
 
-  const signInWithMicrosoft = async () => {
+  const signInWithMagicLink = async (email: string) => {
     if (isDemoMode) {
       setUser({
         id: 'demo-user',
-        email: 'demo@spendmapr.com',
-        user_metadata: { full_name: 'Demo User', avatar_url: '' },
-        app_metadata: { provider: 'azure' },
+        email,
+        user_metadata: { full_name: email.split('@')[0] },
+        app_metadata: {},
         aud: 'authenticated',
         created_at: new Date().toISOString(),
       } as User);
-      return;
+      return { error: null };
     }
 
     setError(null);
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'azure',
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
       options: {
-        redirectTo: getRedirectURL(),
-        scopes: 'email profile openid',
-        skipBrowserRedirect: false,
+        emailRedirectTo: getRedirectURL(),
       },
     });
 
     if (error) {
       setError(error.message);
+      return { error: error.message };
     }
+    return { error: null };
   };
 
   const signOut = async () => {
@@ -123,11 +119,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(null);
       return;
     }
-
     const { error } = await supabase.auth.signOut();
-    if (error) {
-      setError(error.message);
-    }
+    if (error) setError(error.message);
   };
 
   return (
@@ -138,7 +131,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isLoading,
         error,
         signInWithGoogle,
-        signInWithMicrosoft,
+        signInWithMagicLink,
         signOut,
         isConfigured: isSupabaseConfigured,
         isDemoMode,
