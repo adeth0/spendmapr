@@ -1,19 +1,19 @@
 /**
- * Mock Open Banking / TrueLayer service.
+ * Open Banking / TrueLayer service — two layers:
  *
- * Structure mirrors what a real TrueLayer integration would return:
- * - ConnectedAccount  → /data/v1/accounts
- * - BankTransaction   → /data/v1/accounts/{id}/transactions
+ *  REAL (live TrueLayer via Supabase Edge Functions):
+ *    initTrueLayerConnect()       calls truelayer-auth → returns redirect URL
+ *    handleTrueLayerCallback()    exchanges code (truelayer-token) + syncs data (truelayer-data)
+ *    syncTrueLayerData()          re-syncs accounts + transactions on demand
+ *    getConnectedBankAccounts()   reads bank_accounts table from Supabase
+ *    getRecentTransactions()      reads transactions table from Supabase
+ *    checkTrueLayerConnection()   checks truelayer_connections table for existence
+ *    disconnectTrueLayer()        deletes connection + cascades to accounts/txns
  *
- * The "connect" flow simulates the TrueLayer OAuth redirect:
- *   1. simulateConnect()   — waits 1.5 s (network sim), persists to localStorage
- *   2. getMockAccounts()   — returns mock data when connected
- *   3. getMockTransactions() — returns recent mock transactions
- *   4. disconnect()        — clears localStorage flag
- *
- * When a real TrueLayer client_id is available, swap simulateConnect() for
- * a real window.location redirect to TrueLayer's auth endpoint.
+ *  MOCK (preserved for demo mode / offline testing):
+ *    simulateConnect(), getMockAccounts(), getMockTransactions(), disconnect(), isConnected()
  */
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 export interface ConnectedAccount {
   id: string;
@@ -132,4 +132,132 @@ export function spendingByCategory(): Record<string, number> {
       acc[t.category] = (acc[t.category] ?? 0) + Math.abs(t.amount);
       return acc;
     }, {});
+}
+
+// ─── Real TrueLayer types (mirrors Supabase table columns) ────────────────────
+
+export interface BankAccountRow {
+  id:                    string;
+  truelayer_account_id:  string;
+  display_name:          string;
+  account_type:          string;
+  currency:              string;
+  balance:               number | null;
+  balance_updated_at:    string | null;
+  provider_display_name: string | null;
+}
+
+export interface TransactionRow {
+  id:                       string;
+  truelayer_transaction_id: string;
+  amount:                   number;
+  currency:                 string;
+  description:              string | null;
+  merchant_name:            string | null;
+  category:                 string | null;
+  transaction_type:         string | null;
+  timestamp:                string;
+  running_balance:          number | null;
+  bank_accounts?:           { display_name: string } | null;
+}
+
+// ─── Real TrueLayer API functions ─────────────────────────────────────────────
+
+/**
+ * Step 1 — calls the truelayer-auth Edge Function to get the TrueLayer
+ * OAuth URL. Stores the CSRF state in sessionStorage, then redirects.
+ * Returns the URL so the caller can decide when to redirect.
+ */
+export async function initTrueLayerConnect(sb: SupabaseClient): Promise<string> {
+  const { data, error } = await sb.functions.invoke('truelayer-auth');
+  if (error) throw new Error(error.message ?? 'Failed to get auth URL');
+  sessionStorage.setItem('tl_oauth_state', (data as { state: string }).state);
+  return (data as { url: string }).url;
+}
+
+/**
+ * Step 2 — called after TrueLayer redirects back with ?code=&state=.
+ * Verifies CSRF state, exchanges the code (truelayer-token), then triggers
+ * an immediate data sync (truelayer-data).
+ * Returns { accounts, transactions } count from the sync.
+ */
+export async function handleTrueLayerCallback(
+  sb:    SupabaseClient,
+  code:  string,
+  state: string,
+): Promise<{ accounts: number; transactions: number }> {
+  // CSRF check
+  const stored = sessionStorage.getItem('tl_oauth_state');
+  if (stored && state !== stored) {
+    sessionStorage.removeItem('tl_oauth_state');
+    throw new Error('State mismatch — possible CSRF. Please try connecting again.');
+  }
+  sessionStorage.removeItem('tl_oauth_state');
+
+  // Exchange code for tokens
+  const { error: tokenErr } = await sb.functions.invoke('truelayer-token', {
+    body: { code },
+  });
+  if (tokenErr) throw new Error(tokenErr.message ?? 'Token exchange failed');
+
+  // Sync data immediately
+  return syncTrueLayerData(sb);
+}
+
+/**
+ * Re-sync accounts and transactions on demand (e.g. Refresh button).
+ */
+export async function syncTrueLayerData(
+  sb: SupabaseClient,
+): Promise<{ accounts: number; transactions: number }> {
+  const { data, error } = await sb.functions.invoke('truelayer-data');
+  if (error) throw new Error(error.message ?? 'Data sync failed');
+  return data as { accounts: number; transactions: number };
+}
+
+/** Fetches connected bank accounts from the bank_accounts Supabase table. */
+export async function getConnectedBankAccounts(sb: SupabaseClient): Promise<BankAccountRow[]> {
+  const { data, error } = await sb
+    .from('bank_accounts')
+    .select('id, truelayer_account_id, display_name, account_type, currency, balance, balance_updated_at, provider_display_name')
+    .order('created_at', { ascending: true });
+  if (error) throw new Error(error.message);
+  return (data ?? []) as BankAccountRow[];
+}
+
+/** Fetches recent transactions joined with their account name. */
+export async function getRecentTransactions(
+  sb:    SupabaseClient,
+  limit = 50,
+): Promise<TransactionRow[]> {
+  const { data, error } = await sb
+    .from('transactions')
+    .select('id, truelayer_transaction_id, amount, currency, description, merchant_name, category, transaction_type, timestamp, running_balance, bank_accounts(display_name)')
+    .order('timestamp', { ascending: false })
+    .limit(limit);
+  if (error) throw new Error(error.message);
+  return (data ?? []) as unknown as TransactionRow[];
+}
+
+/** Returns true if the user has a stored TrueLayer connection. */
+export async function checkTrueLayerConnection(sb: SupabaseClient): Promise<boolean> {
+  const { count, error } = await sb
+    .from('truelayer_connections')
+    .select('id', { count: 'exact', head: true });
+  if (error) return false;
+  return (count ?? 0) > 0;
+}
+
+/**
+ * Removes the TrueLayer connection and all synced bank data.
+ * Transactions are cascade-deleted via the bank_accounts FK.
+ */
+export async function disconnectTrueLayer(
+  sb:     SupabaseClient,
+  userId: string,
+): Promise<void> {
+  // Delete connection (tokens)
+  await sb.from('truelayer_connections').delete().eq('user_id', userId);
+  // Delete synced accounts (transactions cascade)
+  await sb.from('bank_accounts').delete().eq('user_id', userId);
 }

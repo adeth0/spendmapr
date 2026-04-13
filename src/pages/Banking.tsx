@@ -1,10 +1,13 @@
-import { useState, useEffect, useRef } from 'react';
-import { Building2, Plus, Trash2, X, Wallet, CreditCard, PiggyBank, Loader2, Unplug, ArrowDown, ArrowUp } from 'lucide-react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { Building2, Plus, Trash2, X, Wallet, CreditCard, PiggyBank, Loader2, Unplug, ArrowDown, ArrowUp, RefreshCw, AlertCircle } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
+import { supabase } from '../lib/supabase';
 import {
-  simulateConnect, disconnect, isConnected,
-  getMockAccounts, getMockTransactions,
-  CATEGORY_COLORS,
-  type ConnectedAccount, type BankTransaction,
+  initTrueLayerConnect, handleTrueLayerCallback,
+  syncTrueLayerData, getConnectedBankAccounts,
+  getRecentTransactions, checkTrueLayerConnection,
+  disconnectTrueLayer, CATEGORY_COLORS,
+  type BankAccountRow, type TransactionRow,
 } from '../lib/bankingService';
 
 interface Account {
@@ -51,31 +54,107 @@ export function Banking() {
   const posBalance   = accounts.filter(a => a.balance >= 0).reduce((s, a) => s + a.balance, 0);
   const negBalance   = accounts.filter(a => a.balance <  0).reduce((s, a) => s + a.balance, 0);
 
-  // ── Open Banking state ────────────────────────────────────────────────────
-  const [obConnected,   setObConnected]   = useState(isConnected);
-  const [obAccounts,    setObAccounts]    = useState<ConnectedAccount[]>(getMockAccounts);
-  const [obTxns,        setObTxns]        = useState<BankTransaction[]>(getMockTransactions);
-  const [obConnecting,  setObConnecting]  = useState(false);
-  const [obShowTxns,    setObShowTxns]    = useState(false);
+  // ── Real TrueLayer Open Banking state ─────────────────────────────────────
+  const { user, isDemoMode }            = useAuth();
+  const [tlConnected,  setTlConnected]  = useState(false);
+  const [tlChecking,   setTlChecking]   = useState(true);
+  const [tlConnecting, setTlConnecting] = useState(false);
+  const [tlSyncing,    setTlSyncing]    = useState(false);
+  const [tlError,      setTlError]      = useState<string | null>(null);
+  const [tlAccounts,   setTlAccounts]   = useState<BankAccountRow[]>([]);
+  const [tlTxns,       setTlTxns]       = useState<TransactionRow[]>([]);
+  const [tlShowTxns,   setTlShowTxns]   = useState(false);
 
-  const handleObConnect = async () => {
-    setObConnecting(true);
+  // Load accounts + transactions from Supabase after connect / sync
+  const loadTlData = useCallback(async () => {
+    const [accs, txns] = await Promise.all([
+      getConnectedBankAccounts(supabase),
+      getRecentTransactions(supabase, 50),
+    ]);
+    setTlAccounts(accs);
+    setTlTxns(txns);
+    setTlConnected(true);
+    setTlChecking(false);
+  }, []);
+
+  // On mount: handle OAuth callback or check existing connection
+  useEffect(() => {
+    if (!user || isDemoMode) { setTlChecking(false); return; }
+
+    const params = new URLSearchParams(window.location.search);
+    const code   = params.get('code');
+    const state  = params.get('state');
+    const errParam = params.get('error');
+
+    // Always clear TrueLayer params from the URL
+    if (code || errParam) {
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+
+    if (errParam) {
+      setTlError(errParam === 'access_denied'
+        ? 'Connection cancelled.'
+        : `TrueLayer error: ${errParam}`);
+      setTlChecking(false);
+      return;
+    }
+
+    if (code) {
+      // Exchange code + sync data
+      setTlConnecting(true);
+      handleTrueLayerCallback(supabase, code, state ?? '')
+        .then(() => loadTlData())
+        .catch(e => { setTlError((e as Error).message); setTlChecking(false); })
+        .finally(() => setTlConnecting(false));
+      return;
+    }
+
+    // No callback — check if already connected
+    checkTrueLayerConnection(supabase)
+      .then(connected => {
+        if (connected) return loadTlData();
+        setTlChecking(false);
+      })
+      .catch(() => setTlChecking(false));
+  }, [user?.id, isDemoMode, loadTlData]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleConnect = async () => {
+    setTlError(null);
+    setTlConnecting(true);
     try {
-      const accs = await simulateConnect();
-      setObAccounts(accs);
-      setObTxns(getMockTransactions());
-      setObConnected(true);
-    } finally {
-      setObConnecting(false);
+      const url = await initTrueLayerConnect(supabase);
+      window.location.href = url;
+    } catch (e) {
+      setTlError((e as Error).message);
+      setTlConnecting(false);
     }
   };
 
-  const handleObDisconnect = () => {
-    disconnect();
-    setObAccounts([]);
-    setObTxns([]);
-    setObConnected(false);
-    setObShowTxns(false);
+  const handleSync = async () => {
+    setTlSyncing(true);
+    setTlError(null);
+    try {
+      await syncTrueLayerData(supabase);
+      await loadTlData();
+    } catch (e) {
+      setTlError((e as Error).message);
+    } finally {
+      setTlSyncing(false);
+    }
+  };
+
+  const handleDisconnect = async () => {
+    if (!user) return;
+    try {
+      await disconnectTrueLayer(supabase, user.id);
+      setTlConnected(false);
+      setTlAccounts([]);
+      setTlTxns([]);
+      setTlShowTxns(false);
+      setTlError(null);
+    } catch (e) {
+      setTlError((e as Error).message);
+    }
   };
 
   const fmtTxnDate = (iso: string) =>
@@ -172,73 +251,114 @@ export function Banking() {
           </div>
         )}
 
-        {/* ── Open Banking ────────────────────────────────────────────────────── */}
+        {/* ── Open Banking (TrueLayer) ────────────────────────────────────────── */}
         <div className="panel p-5 space-y-4">
-          {/* Header */}
+
+          {/* Section header */}
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <div className="h-10 w-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                style={{ background: obConnected ? 'rgba(34,197,94,0.12)' : 'rgba(59,130,246,0.12)' }}>
-                <Building2 size={18} style={{ color: obConnected ? '#22c55e' : 'var(--accent)' }} />
+                style={{ background: tlConnected ? 'rgba(34,197,94,0.12)' : 'rgba(59,130,246,0.12)' }}>
+                <Building2 size={18} style={{ color: tlConnected ? '#22c55e' : 'var(--accent)' }} />
               </div>
               <div>
                 <p className="font-semibold text-white text-sm">Open Banking</p>
-                <p className="text-xs" style={{ color: obConnected ? '#22c55e' : 'var(--text-3)' }}>
-                  {obConnected ? 'Connected via TrueLayer (demo)' : 'Automatic bank sync via TrueLayer'}
+                <p className="text-xs" style={{ color: tlConnected ? '#22c55e' : 'var(--text-3)' }}>
+                  {tlChecking   ? 'Checking connection…'           :
+                   tlConnecting ? 'Connecting…'                    :
+                   tlConnected  ? 'Connected via TrueLayer'        :
+                                  'Automatic bank sync via TrueLayer'}
                 </p>
               </div>
             </div>
-            {obConnected && (
-              <button
-                onClick={handleObDisconnect}
-                className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition-colors"
-                style={{ color: 'var(--text-3)', background: 'var(--bg-raised)' }}
-                onMouseEnter={e => (e.currentTarget.style.color = 'var(--red)')}
-                onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-3)')}
-              >
-                <Unplug size={12} /> Disconnect
-              </button>
+
+            {/* Connected: sync + disconnect buttons */}
+            {tlConnected && (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleSync}
+                  disabled={tlSyncing}
+                  className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition-colors disabled:opacity-40"
+                  style={{ color: 'var(--text-2)', background: 'var(--bg-raised)' }}
+                >
+                  <RefreshCw size={12} className={tlSyncing ? 'animate-spin' : ''} />
+                  {tlSyncing ? 'Syncing…' : 'Sync'}
+                </button>
+                <button
+                  onClick={handleDisconnect}
+                  className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg transition-colors"
+                  style={{ color: 'var(--text-3)', background: 'var(--bg-raised)' }}
+                  onMouseEnter={e => (e.currentTarget.style.color = 'var(--red)')}
+                  onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-3)')}
+                >
+                  <Unplug size={12} /> Disconnect
+                </button>
+              </div>
             )}
           </div>
 
+          {/* Error banner */}
+          {tlError && (
+            <div className="flex items-start gap-2 rounded-xl px-3 py-2.5 text-xs"
+              style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', color: 'var(--red)' }}>
+              <AlertCircle size={13} className="flex-shrink-0 mt-0.5" />
+              <span>{tlError}</span>
+            </div>
+          )}
+
+          {/* Connecting spinner (OAuth callback in progress) */}
+          {tlConnecting && (
+            <div className="flex items-center gap-3 py-2">
+              <Loader2 size={16} className="animate-spin flex-shrink-0" style={{ color: 'var(--accent)' }} />
+              <p className="text-sm" style={{ color: 'var(--text-2)' }}>
+                Exchanging tokens and syncing your account data…
+              </p>
+            </div>
+          )}
+
           {/* Connected: account tiles */}
-          {obConnected && obAccounts.length > 0 && (
+          {tlConnected && tlAccounts.length > 0 && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {obAccounts.map(acc => (
+              {tlAccounts.map((acc: BankAccountRow) => (
                 <div key={acc.id} className="rounded-xl p-4 space-y-2"
                   style={{ background: 'var(--bg-raised)', border: '1px solid var(--border)' }}>
-                  <div className="flex items-center justify-between">
-                    <p className="text-xs font-medium" style={{ color: 'var(--text-3)' }}>
-                      {acc.providerLabel} · {acc.accountType}
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-xs font-medium truncate" style={{ color: 'var(--text-3)' }}>
+                      {acc.provider_display_name
+                        ? `${acc.provider_display_name} · ${acc.account_type}`
+                        : acc.account_type}
                     </p>
-                    {acc.last4 && (
-                      <span className="badge-muted">•••• {acc.last4}</span>
-                    )}
+                    <span className="badge-muted flex-shrink-0">{acc.currency}</span>
                   </div>
-                  <p className="text-lg font-bold text-white">{fmt(acc.balance)}</p>
-                  <p className="text-xs" style={{ color: 'var(--text-3)' }}>{acc.displayName}</p>
+                  <p className="text-lg font-bold text-white">
+                    {acc.balance !== null ? fmt(acc.balance) : '—'}
+                  </p>
+                  <p className="text-xs truncate" style={{ color: 'var(--text-3)' }}>
+                    {acc.display_name}
+                  </p>
                 </div>
               ))}
             </div>
           )}
 
-          {/* Connected: recent transactions toggle */}
-          {obConnected && (
+          {/* Connected: recent transactions */}
+          {tlConnected && (
             <div>
               <button
-                onClick={() => setObShowTxns(v => !v)}
+                onClick={() => setTlShowTxns((v: boolean) => !v)}
                 className="flex items-center gap-1.5 text-xs font-semibold w-full justify-between px-1 py-1 transition-opacity hover:opacity-70"
                 style={{ color: 'var(--text-2)' }}
               >
-                <span>Recent transactions ({obTxns.length})</span>
-                <span style={{ color: 'var(--text-3)' }}>{obShowTxns ? '▲ Hide' : '▼ Show'}</span>
+                <span>Recent transactions ({tlTxns.length})</span>
+                <span style={{ color: 'var(--text-3)' }}>{tlShowTxns ? '▲ Hide' : '▼ Show'}</span>
               </button>
 
-              {obShowTxns && (
+              {tlShowTxns && (
                 <div className="mt-2 space-y-1">
-                  {obTxns.map(txn => {
+                  {tlTxns.map((txn: TransactionRow) => {
                     const isCredit = txn.amount > 0;
-                    const color    = CATEGORY_COLORS[txn.category] ?? 'var(--text-3)';
+                    const label    = txn.merchant_name || txn.description || 'Transaction';
+                    const color    = CATEGORY_COLORS[txn.category ?? ''] ?? 'var(--text-3)';
                     return (
                       <div key={txn.id}
                         className="flex items-center justify-between px-3 py-2.5 rounded-xl"
@@ -251,9 +371,9 @@ export function Banking() {
                               : <ArrowUp   size={13} style={{ color }} />}
                           </div>
                           <div className="min-w-0">
-                            <p className="text-sm font-medium text-white truncate">{txn.merchant}</p>
+                            <p className="text-sm font-medium text-white truncate">{label}</p>
                             <p className="text-xs" style={{ color: 'var(--text-3)' }}>
-                              {txn.category} · {fmtTxnDate(txn.date)}
+                              {txn.category ?? 'Other'} · {fmtTxnDate(txn.timestamp)}
                             </p>
                           </div>
                         </div>
@@ -269,28 +389,37 @@ export function Banking() {
             </div>
           )}
 
-          {/* Not connected: connect prompt */}
-          {!obConnected && (
+          {/* Not connected + not checking: connect prompt */}
+          {!tlConnected && !tlChecking && !tlConnecting && (
             <>
               <p className="text-sm" style={{ color: 'var(--text-2)' }}>
-                Connect your bank securely using Open Banking (FCA regulated) to automatically sync transactions and balances.
+                Connect your bank securely using Open Banking (FCA regulated) to automatically sync
+                transactions and balances. Powered by TrueLayer.
               </p>
               <div className="flex flex-wrap gap-2">
                 {['Barclays','HSBC','Lloyds','NatWest','Starling','Monzo','Chase','Halifax'].map(bank => (
                   <span key={bank} className="badge-muted">{bank}</span>
                 ))}
               </div>
-              <button
-                onClick={handleObConnect}
-                disabled={obConnecting}
-                className="apple-button-primary disabled:opacity-60"
-              >
-                {obConnecting
-                  ? <><Loader2 size={15} className="animate-spin" /> Connecting…</>
-                  : <><Building2 size={15} /> Connect with Monzo (Demo)</>}
-              </button>
+              {isDemoMode ? (
+                <p className="text-xs px-3 py-2.5 rounded-xl"
+                  style={{ background: 'var(--bg-raised)', color: 'var(--text-3)' }}>
+                  Open Banking requires a Supabase-authenticated account and is not available in demo mode.
+                </p>
+              ) : (
+                <button
+                  onClick={handleConnect}
+                  disabled={tlConnecting}
+                  className="apple-button-primary disabled:opacity-60"
+                >
+                  {tlConnecting
+                    ? <><Loader2 size={15} className="animate-spin" /> Connecting…</>
+                    : <><Building2 size={15} /> Connect with Monzo</>}
+                </button>
+              )}
             </>
           )}
+
         </div>
 
       </div>
