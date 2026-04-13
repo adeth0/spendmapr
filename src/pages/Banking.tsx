@@ -373,7 +373,7 @@ export function Banking() {
                           <div className="min-w-0">
                             <p className="text-sm font-medium text-white truncate">{label}</p>
                             <p className="text-xs" style={{ color: 'var(--text-3)' }}>
-                              {txn.category ?? 'Other'} · {fmtTxnDate(txn.timestamp)}
+                              {txn.category ?? 'Other'} · {fmtTxnDate(txn.transaction_at)}
                             </p>
                           </div>
                         </div>

@@ -218,7 +218,7 @@ Deno.serve(async (req: Request) => {
         merchant_name:            t.merchant_name ?? null,
         category:                 t.transaction_classification?.[0] ?? null,
         transaction_type:         t.transaction_type ?? null,
-        timestamp:                t.timestamp,
+        transaction_at:           t.timestamp,
         running_balance:          t.running_balance?.amount ?? null,
       }));
 

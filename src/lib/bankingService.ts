@@ -156,7 +156,7 @@ export interface TransactionRow {
   merchant_name:            string | null;
   category:                 string | null;
   transaction_type:         string | null;
-  timestamp:                string;
+  transaction_at:           string;
   running_balance:          number | null;
   bank_accounts?:           { display_name: string } | null;
 }
@@ -232,8 +232,8 @@ export async function getRecentTransactions(
 ): Promise<TransactionRow[]> {
   const { data, error } = await sb
     .from('transactions')
-    .select('id, truelayer_transaction_id, amount, currency, description, merchant_name, category, transaction_type, timestamp, running_balance, bank_accounts(display_name)')
-    .order('timestamp', { ascending: false })
+    .select('id, truelayer_transaction_id, amount, currency, description, merchant_name, category, transaction_type, transaction_at, running_balance, bank_accounts(display_name)')
+    .order('transaction_at', { ascending: false })
     .limit(limit);
   if (error) throw new Error(error.message);
   return (data ?? []) as unknown as TransactionRow[];

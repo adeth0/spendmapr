@@ -73,7 +73,7 @@ CREATE TABLE IF NOT EXISTS public.transactions (
   merchant_name            text,
   category                 text,
   transaction_type         text,
-  timestamp                timestamptz   NOT NULL,
+  transaction_at           timestamptz   NOT NULL,
   running_balance          numeric(14,2),
   created_at               timestamptz   NOT NULL DEFAULT now(),
   UNIQUE(user_id, truelayer_transaction_id)
@@ -88,7 +88,7 @@ CREATE POLICY "transactions_self"
   WITH CHECK (auth.uid() = user_id);
 
 CREATE INDEX IF NOT EXISTS transactions_user_id_ts_idx
-  ON public.transactions (user_id, timestamp DESC);
+  ON public.transactions (user_id, transaction_at DESC);
 
 CREATE INDEX IF NOT EXISTS transactions_account_id_idx
   ON public.transactions (account_id);
