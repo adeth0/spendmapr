@@ -1,15 +1,28 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { lazy, Suspense } from 'react';
 import { Dashboard } from './pages/Dashboard';
 import { Login } from './pages/Login';
 import { AuthCallback } from './pages/AuthCallback';
 import { Banking } from './pages/Banking';
 import { DebtTracker } from './pages/DebtTracker';
 import { Goals } from './pages/Goals';
-import { Investments } from './pages/Investments';
 import { Transactions } from './pages/Transactions';
 import { AppShell } from './components/AppShell';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
+
+// Lazy-load Investments to defer the ~400 kB recharts bundle
+const Investments = lazy(() =>
+  import('./pages/Investments').then(m => ({ default: m.Investments }))
+);
+
+function PageLoader() {
+  return (
+    <div className="flex items-center justify-center min-h-[50vh]">
+      <Loader2 className="h-7 w-7 animate-spin text-slate-400" />
+    </div>
+  );
+}
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
@@ -67,7 +80,7 @@ function AppRoutes() {
           {/* /debts alias */}
           <Route path="debts" element={<Navigate to="/debt-tracker" replace />} />
           <Route path="goals" element={<Goals />} />
-          <Route path="investments" element={<Investments />} />
+          <Route path="investments" element={<Suspense fallback={<PageLoader />}><Investments /></Suspense>} />
           <Route path="transactions" element={<Transactions />} />
         </Route>
 

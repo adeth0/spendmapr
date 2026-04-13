@@ -10,14 +10,21 @@
 
 body {
   @apply bg-[#F7F8FA] text-slate-950 antialiased;
-  min-height: 100vh;
+  min-height: 100dvh;
   background-attachment: fixed;
   line-height: 1.6;
   margin: 0;
   padding: 0;
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 * {
+  -webkit-tap-highlight-color: transparent;
+}
+
+*, *::before, *::after {
   @apply border-line;
 }
 
@@ -31,7 +38,10 @@ body {
 }
 
 .page-shell {
-  @apply mx-auto flex min-h-screen w-full max-w-[1720px] flex-col gap-8 px-6 pb-20 pt-12 sm:px-8 xl:px-14 2xl:px-20 bg-[#F7F8FA];
+  @apply mx-auto flex w-full max-w-[1720px] flex-col gap-8 px-6 pt-12 sm:px-8 xl:px-14 2xl:px-20 bg-[#F7F8FA];
+  min-height: 100dvh;
+  /* Bottom padding: enough for sticky bottom nav on mobile + safe area inset */
+  padding-bottom: calc(5rem + env(safe-area-inset-bottom));
 }
 
 .section-title {
@@ -52,12 +62,14 @@ body {
 }
 
 .apple-input {
-  @apply h-12 w-full rounded-2xl border border-slate-200/90 bg-slate-50/90 px-4 text-sm text-slate-900 outline-none transition-all duration-200 placeholder:text-slate-400 focus:border-slate-300 focus:bg-white focus:ring-4 focus:ring-slate-200/70;
+  @apply h-12 w-full rounded-2xl border border-slate-200/90 bg-slate-50/90 px-4 text-slate-900 outline-none transition-all duration-200 placeholder:text-slate-400 focus:border-slate-300 focus:bg-white focus:ring-4 focus:ring-slate-200/70;
+  font-size: 16px; /* Prevent iOS zoom on focus */
   transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .apple-textarea {
-  @apply w-full rounded-2xl border border-slate-200/90 bg-slate-50/90 px-4 py-3 text-sm text-slate-900 outline-none transition-all duration-200 placeholder:text-slate-400 focus:border-slate-300 focus:bg-white focus:ring-4 focus:ring-slate-200/70;
+  @apply w-full rounded-2xl border border-slate-200/90 bg-slate-50/90 px-4 py-3 text-slate-900 outline-none transition-all duration-200 placeholder:text-slate-400 focus:border-slate-300 focus:bg-white focus:ring-4 focus:ring-slate-200/70;
+  font-size: 16px; /* Prevent iOS zoom on focus */
   transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
@@ -105,21 +117,29 @@ body {
 /* Mobile responsive utilities */
 @media (max-width: 640px) {
   .page-shell {
-    @apply px-4 pb-16 pt-8;
+    @apply px-4 pt-6;
+    /* bottom: 80px nav + safe-area, handled in base rule */
   }
-  
+
   .section-title {
-    @apply text-xl sm:text-2xl;
+    @apply text-xl;
   }
-  
+
   .apple-button,
   .apple-button-primary,
   .apple-button-secondary,
   .apple-button-tertiary {
-    @apply w-full text-base py-4;
+    @apply w-full py-4;
+    min-height: 48px;
   }
-  
+
   .apple-input {
-    @apply h-14 text-base;
+    height: 52px;
+    /* font-size already 16px — no override needed */
   }
+}
+
+/* Panel webkit blur fallback */
+.panel {
+  -webkit-backdrop-filter: blur(24px);
 }
