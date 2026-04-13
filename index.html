@@ -6,6 +6,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="SpendMapr - Personal finance dashboard for tracking spending, debt, and savings goals." />
     <title>SpendMapr</title>
+    <!-- Restore URL path after GitHub Pages 404 redirect.
+         The 404.html encodes the original path as ?p=... so React Router
+         boots with the correct URL. -->
+    <script>
+      (function () {
+        var params = new URLSearchParams(window.location.search);
+        var p = params.get('p');
+        if (p) {
+          var h = params.get('h') || '';
+          params.delete('p');
+          params.delete('h');
+          var rest = params.toString() ? '?' + params.toString() : '';
+          window.history.replaceState(
+            null,
+            '',
+            decodeURIComponent(p) + rest + decodeURIComponent(h)
+          );
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

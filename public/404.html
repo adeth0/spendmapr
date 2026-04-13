@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>SpendMapr</title>
+    <script>
+      // Single-Page App redirect for GitHub Pages.
+      // Encodes the full URL (path + query + hash) into a query param so
+      // GitHub Pages serves index.html, which then restores the original URL.
+      // Based on https://github.com/rafgraph/spa-github-pages
+      var l = window.location;
+      l.replace(
+        l.protocol + '//' + l.host + l.pathname.split('/').slice(0, 1).join('/') +
+        '/?p=' + encodeURIComponent(l.pathname + l.search) +
+        (l.hash ? '&h=' + encodeURIComponent(l.hash) : '')
+      );
+    </script>
+  </head>
+  <body></body>
+</html>

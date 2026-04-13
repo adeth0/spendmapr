@@ -1,17 +1,25 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
 
-// Create Supabase client with fallback for demo mode
 export const supabase = createClient(
-  supabaseUrl || 'https://demo.supabase.co',
-  supabaseAnonKey || 'demo-anon-key'
+  supabaseUrl || 'https://placeholder.supabase.co',
+  supabaseAnonKey || 'placeholder-anon-key',
+  {
+    auth: {
+      autoRefreshToken: true,
+      persistSession: true,
+      detectSessionInUrl: true,
+      flowType: 'pkce',
+    },
+  }
 );
 
-export function isDemoMode() {
-  return !supabaseUrl || !supabaseAnonKey || 
-         supabaseUrl.includes('your-') || 
-         supabaseAnonKey.includes('your-') ||
-         supabaseUrl === 'https://demo.supabase.co';
-}
+export const isSupabaseConfigured = Boolean(
+  supabaseUrl &&
+  supabaseAnonKey &&
+  !supabaseUrl.includes('placeholder') &&
+  !supabaseUrl.includes('your-') &&
+  supabaseUrl !== 'https://demo.supabase.co'
+);

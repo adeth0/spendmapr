@@ -1,14 +1,16 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
-import { supabase } from '../lib/supabase';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   isLoading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
-  signUp: (email: string, password: string) => Promise<{ error: Error | null }>;
+  error: string | null;
+  signInWithGoogle: () => Promise<void>;
+  signInWithMicrosoft: () => Promise<void>;
   signOut: () => Promise<void>;
+  isConfigured: boolean;
   isDemoMode: boolean;
 }
 
@@ -18,62 +20,101 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isDemoMode, setIsDemoMode] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const isDemoMode = !isSupabaseConfigured;
 
   useEffect(() => {
-    // Check if Supabase is configured
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-    
-    if (!supabaseUrl || !supabaseAnonKey || supabaseUrl.includes('your-') || supabaseAnonKey.includes('your-')) {
-      setIsDemoMode(true);
+    if (isDemoMode) {
       setIsLoading(false);
       return;
     }
 
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+    // Get initial session (also exchanges PKCE code if ?code= is in URL)
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (error) {
+        setError(error.message);
+      } else {
+        setSession(session);
+        setUser(session?.user ?? null);
+      }
       setIsLoading(false);
     });
 
-    // Listen for auth changes
+    // Listen for auth state changes (sign in, sign out, token refresh)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
+      setError(null);
       setIsLoading(false);
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [isDemoMode]);
 
-  const signIn = async (email: string, password: string) => {
-    if (isDemoMode) {
-      // Demo mode - simulate successful login
-      setUser({ id: 'demo-user', email } as User);
-      return { error: null };
-    }
-
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    return { error };
+  const getRedirectURL = () => {
+    // Use the live domain in production, localhost in development
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://spend.kavauralabs.com';
+    return `${origin}/auth/callback`;
   };
 
-  const signUp = async (email: string, password: string) => {
+  const signInWithGoogle = async () => {
     if (isDemoMode) {
-      // Demo mode - simulate successful signup
-      setUser({ id: 'demo-user', email } as User);
-      return { error: null };
+      setUser({
+        id: 'demo-user',
+        email: 'demo@spendmapr.com',
+        user_metadata: { full_name: 'Demo User', avatar_url: '' },
+        app_metadata: { provider: 'google' },
+        aud: 'authenticated',
+        created_at: new Date().toISOString(),
+      } as User);
+      return;
     }
 
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
+    setError(null);
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: getRedirectURL(),
+        queryParams: {
+          access_type: 'offline',
+          prompt: 'consent',
+        },
+        skipBrowserRedirect: false,
+      },
     });
-    return { error };
+
+    if (error) {
+      setError(error.message);
+    }
+  };
+
+  const signInWithMicrosoft = async () => {
+    if (isDemoMode) {
+      setUser({
+        id: 'demo-user',
+        email: 'demo@spendmapr.com',
+        user_metadata: { full_name: 'Demo User', avatar_url: '' },
+        app_metadata: { provider: 'azure' },
+        aud: 'authenticated',
+        created_at: new Date().toISOString(),
+      } as User);
+      return;
+    }
+
+    setError(null);
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'azure',
+      options: {
+        redirectTo: getRedirectURL(),
+        scopes: 'email profile openid',
+        skipBrowserRedirect: false,
+      },
+    });
+
+    if (error) {
+      setError(error.message);
+    }
   };
 
   const signOut = async () => {
@@ -83,20 +124,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    await supabase.auth.signOut();
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      setError(error.message);
+    }
   };
 
-  const value = {
-    user,
-    session,
-    isLoading,
-    signIn,
-    signUp,
-    signOut,
-    isDemoMode,
-  };
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider
+      value={{
+        user,
+        session,
+        isLoading,
+        error,
+        signInWithGoogle,
+        signInWithMicrosoft,
+        signOut,
+        isConfigured: isSupabaseConfigured,
+        isDemoMode,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
 export function useAuth() {
