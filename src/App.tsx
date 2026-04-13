@@ -64,6 +64,8 @@ function AppRoutes() {
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="banking" element={<Banking />} />
           <Route path="debt-tracker" element={<DebtTracker />} />
+          {/* /debts alias */}
+          <Route path="debts" element={<Navigate to="/debt-tracker" replace />} />
           <Route path="goals" element={<Goals />} />
           <Route path="investments" element={<Investments />} />
           <Route path="transactions" element={<Transactions />} />
