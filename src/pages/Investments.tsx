@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent } from '../components/ui/Card';
 import { TrendingUp, TrendingDown, Plus, Trash2, X } from 'lucide-react';
+import { MarketIndices } from '../components/MarketIndices';
 
 interface Investment {
   id: string;
@@ -79,6 +80,9 @@ export function Investments() {
             Add Holding
           </button>
         </div>
+
+        {/* Live market indices */}
+        <MarketIndices />
 
         {/* Portfolio summary */}
         {investments.length > 0 && (
