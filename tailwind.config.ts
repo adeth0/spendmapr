@@ -8,37 +8,50 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: "#F7F8FA",
-        foreground: "#111827",
-        line: "#E5E7EB",
-        surface: "#FBFBFC",
-        slatewarm: "#F7F8FA",
+        // ── Dark theme tokens ─────────────────────────────────────────────
+        app: {
+          bg:      '#0b0f17',   // page background
+          card:    '#111827',   // card / surface
+          raised:  '#161d2b',   // elevated cards
+          input:   '#0f1623',   // input fields
+          border:  '#1f2937',   // default borders
+          subtle:  '#131a26',   // subtle borders
+        },
+        // ── Accent ───────────────────────────────────────────────────────
         brand: {
-          50: "#EEF4FF",
-          100: "#E4EDFF",
-          300: "#A8C0FF",
-          500: "#5B82F6",
-          600: "#3F69DF"
-        }
+          50:  '#eff6ff',
+          100: '#dbeafe',
+          300: '#93c5fd',
+          400: '#60a5fa',
+          500: '#3b82f6',
+          600: '#2563eb',
+          700: '#1d4ed8',
+        },
       },
       boxShadow: {
-        soft: "0 24px 60px -34px rgba(15, 23, 42, 0.18)",
-        card: "0 10px 30px -20px rgba(15, 23, 42, 0.10)",
-        hover: "0 28px 60px -36px rgba(15, 23, 42, 0.16)"
+        'dark-sm':  '0 2px 8px rgba(0,0,0,0.4)',
+        'dark-md':  '0 4px 24px rgba(0,0,0,0.5)',
+        'dark-lg':  '0 8px 40px rgba(0,0,0,0.6)',
+        'glow-sm':  '0 0 16px rgba(59,130,246,0.18)',
+        'glow-md':  '0 0 32px rgba(59,130,246,0.25)',
       },
       fontFamily: {
-        sans: ["SF Pro Display", "SF Pro Text", "ui-sans-serif", "system-ui", "sans-serif"]
-      },
-      backgroundImage: {
-        "hero-glow":
-          "radial-gradient(circle at top left, rgba(91, 130, 246, 0.12), transparent 34%), radial-gradient(circle at top right, rgba(255, 255, 255, 0.75), transparent 30%)"
+        sans: [
+          "SF Pro Display", "SF Pro Text", "ui-sans-serif",
+          "system-ui", "-apple-system", "BlinkMacSystemFont",
+          '"Segoe UI"', "sans-serif",
+        ],
       },
       transitionTimingFunction: {
-        apple: "cubic-bezier(0.22, 1, 0.36, 1)"
-      }
-    }
+        apple: "cubic-bezier(0.22, 1, 0.36, 1)",
+      },
+      backgroundImage: {
+        'hero-gradient': 'linear-gradient(135deg, #1d4ed8 0%, #1e1b4b 50%, #0b0f17 100%)',
+        'card-gradient': 'linear-gradient(145deg, #1c2840 0%, #111827 100%)',
+      },
+    },
   },
-  plugins: []
+  plugins: [],
 };
 
 export default config;

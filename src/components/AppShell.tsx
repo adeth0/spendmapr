@@ -3,33 +3,20 @@ import { Outlet, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { ToastContainer } from './ui/Toast';
 import {
-  LayoutDashboard,
-  Building2,
-  TrendingUp,
-  Target,
-  Receipt,
-  CreditCard,
-  LogOut,
-  User,
-  MoreHorizontal,
-  X,
+  LayoutDashboard, Building2, TrendingUp, Target, Receipt,
+  CreditCard, LogOut, MoreHorizontal, X, ChevronRight,
 } from 'lucide-react';
 
-// 5 primary items for bottom nav; Transactions lives under "More"
-const bottomNavItems = [
+const primaryNav = [
   { path: '/dashboard',    label: 'Dashboard',   icon: LayoutDashboard },
   { path: '/banking',      label: 'Banking',      icon: Building2 },
-  { path: '/investments',  label: 'Invest',       icon: TrendingUp },
+  { path: '/investments',  label: 'Investments',  icon: TrendingUp },
   { path: '/goals',        label: 'Goals',        icon: Target },
   { path: '/debt-tracker', label: 'Debt',         icon: CreditCard },
 ];
 
-const sidebarItems = [
-  { path: '/dashboard',    label: 'Dashboard',    icon: LayoutDashboard },
-  { path: '/banking',      label: 'Banking',      icon: Building2 },
-  { path: '/investments',  label: 'Investments',  icon: TrendingUp },
-  { path: '/goals',        label: 'Goals',        icon: Target },
-  { path: '/debt-tracker', label: 'Debt Tracker', icon: CreditCard },
+const sidebarNav = [
+  ...primaryNav,
   { path: '/transactions', label: 'Transactions', icon: Receipt },
 ];
 
@@ -40,10 +27,7 @@ export function AppShell() {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
 
-  // Close "more" drawer on navigation
-  React.useEffect(() => {
-    setMoreOpen(false);
-  }, [location]);
+  React.useEffect(() => { setMoreOpen(false); }, [location]);
 
   const handleSignOut = async () => {
     setSigningOut(true);
@@ -58,144 +42,175 @@ export function AppShell() {
     'Account';
 
   const avatarUrl = user?.user_metadata?.avatar_url || user?.user_metadata?.picture;
+  const initials  = displayName.slice(0, 2).toUpperCase();
 
   return (
-    <div className="min-h-dvh bg-[#F7F8FA]">
+    <div style={{ background: 'var(--bg-page)', minHeight: '100dvh' }}>
 
-      {/* ── Desktop sidebar ─────────────────────────────────────────────── */}
-      <aside className="hidden lg:flex w-64 fixed left-0 top-0 bottom-0 bg-white border-r border-slate-200 p-6 flex-col z-30">
-        <div className="mb-8">
-          <h1 className="text-xl font-bold text-slate-900">SpendMapr</h1>
-          <p className="text-sm text-slate-500 mt-1">Personal Finance</p>
+      {/* ── Desktop sidebar ─────────────────────────────────────────────────── */}
+      <aside
+        className="hidden lg:flex w-60 fixed left-0 top-0 bottom-0 flex-col z-30"
+        style={{ background: '#080d14', borderRight: '1px solid var(--border)' }}
+      >
+        {/* Logo */}
+        <div className="px-5 pt-6 pb-4">
+          <div className="flex items-center gap-2.5">
+            <div
+              className="h-8 w-8 rounded-lg flex items-center justify-center flex-shrink-0"
+              style={{ background: 'var(--accent)' }}
+            >
+              <span className="text-white font-bold text-sm">S</span>
+            </div>
+            <span className="text-white font-bold text-base tracking-tight">SpendMapr</span>
+          </div>
         </div>
 
-        <nav className="space-y-1 flex-1">
-          {sidebarItems.map((item) => {
+        {/* Nav */}
+        <nav className="flex-1 px-3 space-y-0.5 pt-2">
+          {sidebarNav.map(item => {
             const Icon = item.icon;
             const isActive = location.pathname === item.path;
             return (
               <NavLink
                 key={item.path}
                 to={item.path}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
-                  isActive ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-                }`}
+                className={[
+                  'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150',
+                  isActive
+                    ? 'text-white'
+                    : 'text-gray-400 hover:text-gray-200',
+                ].join(' ')}
+                style={isActive ? {
+                  background: 'rgba(59,130,246,0.15)',
+                  borderLeft: '2px solid var(--accent)',
+                  paddingLeft: '10px',
+                } : {}}
               >
-                <Icon size={18} />
-                <span className="font-medium text-sm">{item.label}</span>
+                <Icon size={17} strokeWidth={isActive ? 2.2 : 1.8} />
+                {item.label}
               </NavLink>
             );
           })}
         </nav>
 
-        {/* Desktop user + sign-out */}
-        <div className="pt-5 border-t border-slate-200 space-y-3">
-          <div className="flex items-center gap-3 px-2">
+        {/* User */}
+        <div className="px-3 pb-6 pt-4" style={{ borderTop: '1px solid var(--border)' }}>
+          <div className="flex items-center gap-3 px-3 mb-2">
             {avatarUrl ? (
-              <img src={avatarUrl} alt={displayName} className="h-8 w-8 rounded-full object-cover flex-shrink-0" referrerPolicy="no-referrer" />
+              <img src={avatarUrl} alt="" className="h-8 w-8 rounded-full object-cover flex-shrink-0" referrerPolicy="no-referrer" />
             ) : (
-              <div className="h-8 w-8 rounded-full bg-slate-200 flex items-center justify-center flex-shrink-0">
-                <User size={15} className="text-slate-500" />
+              <div className="h-8 w-8 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold text-white"
+                style={{ background: 'var(--accent)' }}>
+                {initials}
               </div>
             )}
             <div className="min-w-0">
-              <p className="text-sm font-medium text-slate-700 truncate">{displayName}</p>
-              {user?.email && <p className="text-xs text-slate-400 truncate">{user.email}</p>}
+              <p className="text-sm font-medium text-white truncate">{displayName}</p>
+              {user?.email && <p className="text-xs truncate" style={{ color: 'var(--text-3)' }}>{user.email}</p>}
             </div>
           </div>
           <button
             onClick={handleSignOut}
             disabled={signingOut}
-            className="flex items-center gap-3 w-full px-4 py-2.5 rounded-xl text-red-600 hover:bg-red-50 transition-colors text-sm font-medium disabled:opacity-50"
+            className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium transition-colors disabled:opacity-50"
+            style={{ color: '#ef4444' }}
+            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(239,68,68,0.08)')}
+            onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
           >
-            <LogOut size={15} />
+            <LogOut size={16} />
             {signingOut ? 'Signing out…' : 'Sign out'}
           </button>
         </div>
       </aside>
 
-      {/* ── Main content ────────────────────────────────────────────────── */}
-      <main className="lg:ml-64">
+      {/* ── Main content ────────────────────────────────────────────────────── */}
+      <main className="lg:ml-60">
         <ToastContainer />
         <Outlet />
       </main>
 
-      {/* ── Mobile sticky bottom nav ─────────────────────────────────────── */}
+      {/* ── Mobile bottom nav ───────────────────────────────────────────────── */}
       <nav
-        className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200"
-        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+        className="lg:hidden fixed bottom-0 left-0 right-0 z-40 flex items-stretch"
+        style={{
+          background: '#080d14',
+          borderTop: '1px solid var(--border)',
+          paddingBottom: 'env(safe-area-inset-bottom)',
+        }}
       >
-        <div className="flex items-stretch">
-          {bottomNavItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = location.pathname === item.path;
-            return (
-              <NavLink
-                key={item.path}
-                to={item.path}
-                className={`flex flex-1 flex-col items-center justify-center gap-0.5 py-2 min-h-[56px] transition-colors ${
-                  isActive ? 'text-slate-900' : 'text-slate-400'
-                }`}
-                aria-label={item.label}
-              >
-                <Icon size={22} strokeWidth={isActive ? 2.2 : 1.8} />
-                <span className={`text-[10px] font-medium leading-tight ${isActive ? 'text-slate-900' : 'text-slate-400'}`}>
-                  {item.label}
-                </span>
-                {isActive && (
-                  <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-slate-900 rounded-full" />
-                )}
-              </NavLink>
-            );
-          })}
+        {primaryNav.map(item => {
+          const Icon = item.icon;
+          const isActive = location.pathname === item.path;
+          return (
+            <NavLink
+              key={item.path}
+              to={item.path}
+              className="flex flex-1 flex-col items-center justify-center gap-0.5 py-2 min-h-[56px] relative"
+              aria-label={item.label}
+            >
+              {isActive && (
+                <span
+                  className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full"
+                  style={{ background: 'var(--accent)' }}
+                />
+              )}
+              <Icon
+                size={22}
+                strokeWidth={isActive ? 2.2 : 1.6}
+                style={{ color: isActive ? 'var(--accent)' : 'var(--text-3)' }}
+              />
+              <span className="text-[9px] font-medium leading-tight" style={{ color: isActive ? 'var(--accent)' : 'var(--text-3)' }}>
+                {item.label}
+              </span>
+            </NavLink>
+          );
+        })}
 
-          {/* "More" button → slide-up sheet */}
-          <button
-            onClick={() => setMoreOpen(true)}
-            className={`flex flex-1 flex-col items-center justify-center gap-0.5 py-2 min-h-[56px] transition-colors ${
-              moreOpen ? 'text-slate-900' : 'text-slate-400'
-            }`}
-            aria-label="More options"
-          >
-            <MoreHorizontal size={22} strokeWidth={1.8} />
-            <span className="text-[10px] font-medium leading-tight">More</span>
-          </button>
-        </div>
+        {/* More */}
+        <button
+          onClick={() => setMoreOpen(true)}
+          className="flex flex-1 flex-col items-center justify-center gap-0.5 py-2 min-h-[56px]"
+          aria-label="More"
+        >
+          <MoreHorizontal size={22} strokeWidth={1.6} style={{ color: 'var(--text-3)' }} />
+          <span className="text-[9px] font-medium leading-tight" style={{ color: 'var(--text-3)' }}>More</span>
+        </button>
       </nav>
 
-      {/* ── Mobile "More" bottom sheet ──────────────────────────────────── */}
+      {/* ── More bottom sheet ────────────────────────────────────────────────── */}
       {moreOpen && (
-        <div
-          className="lg:hidden fixed inset-0 z-50 flex items-end"
-          onClick={() => setMoreOpen(false)}
-        >
-          {/* Scrim */}
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
-
-          {/* Sheet */}
+        <div className="lg:hidden fixed inset-0 z-50 flex items-end" onClick={() => setMoreOpen(false)}>
+          <div className="absolute inset-0" style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }} />
           <div
-            className="relative w-full bg-white rounded-t-3xl shadow-2xl p-5 pb-safe space-y-1"
-            style={{ paddingBottom: 'calc(1.25rem + env(safe-area-inset-bottom))' }}
+            className="relative w-full rounded-t-3xl p-5 space-y-1"
+            style={{ background: 'var(--bg-card)', paddingBottom: 'calc(1.25rem + env(safe-area-inset-bottom))' }}
             onClick={e => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between mb-4">
+            {/* Handle */}
+            <div className="flex justify-center -mt-1 mb-4">
+              <div className="h-1 w-10 rounded-full" style={{ background: 'var(--border)' }} />
+            </div>
+
+            {/* User info */}
+            <div className="flex items-center justify-between mb-5 px-1">
               <div className="flex items-center gap-3">
                 {avatarUrl ? (
-                  <img src={avatarUrl} alt={displayName} className="h-9 w-9 rounded-full object-cover" referrerPolicy="no-referrer" />
+                  <img src={avatarUrl} alt="" className="h-10 w-10 rounded-full object-cover" referrerPolicy="no-referrer" />
                 ) : (
-                  <div className="h-9 w-9 rounded-full bg-slate-200 flex items-center justify-center">
-                    <User size={16} className="text-slate-500" />
+                  <div className="h-10 w-10 rounded-full flex items-center justify-center text-sm font-bold text-white"
+                    style={{ background: 'var(--accent)' }}>
+                    {initials}
                   </div>
                 )}
                 <div>
-                  <p className="text-sm font-semibold text-slate-900">{displayName}</p>
-                  {user?.email && <p className="text-xs text-slate-400">{user.email}</p>}
+                  <p className="text-sm font-semibold text-white">{displayName}</p>
+                  {user?.email && <p className="text-xs" style={{ color: 'var(--text-3)' }}>{user.email}</p>}
                 </div>
               </div>
               <button
                 onClick={() => setMoreOpen(false)}
-                className="p-2 rounded-full bg-slate-100 text-slate-500 hover:text-slate-700"
-                aria-label="Close"
+                className="h-9 w-9 rounded-full flex items-center justify-center"
+                style={{ background: 'var(--bg-raised)', color: 'var(--text-2)' }}
               >
                 <X size={18} />
               </button>
@@ -204,20 +219,27 @@ export function AppShell() {
             {/* Transactions link */}
             <NavLink
               to="/transactions"
-              className={`flex items-center gap-4 px-4 py-3.5 rounded-2xl transition-colors ${
-                location.pathname === '/transactions' ? 'bg-slate-900 text-white' : 'text-slate-700 hover:bg-slate-100'
-              }`}
+              className="flex items-center justify-between px-4 py-3.5 rounded-2xl transition-colors"
+              style={{
+                background: location.pathname === '/transactions' ? 'rgba(59,130,246,0.12)' : 'var(--bg-raised)',
+                color: location.pathname === '/transactions' ? 'var(--accent)' : 'var(--text-1)',
+              }}
             >
-              <Receipt size={20} />
-              <span className="font-medium">Transactions</span>
+              <div className="flex items-center gap-3">
+                <Receipt size={19} />
+                <span className="font-medium text-sm">Transactions</span>
+              </div>
+              <ChevronRight size={16} style={{ color: 'var(--text-3)' }} />
             </NavLink>
 
+            {/* Sign out */}
             <button
               onClick={handleSignOut}
               disabled={signingOut}
-              className="flex items-center gap-4 w-full px-4 py-3.5 rounded-2xl text-red-600 hover:bg-red-50 transition-colors font-medium disabled:opacity-50 mt-2"
+              className="flex items-center gap-3 w-full px-4 py-3.5 rounded-2xl font-medium text-sm transition-colors disabled:opacity-50 mt-2"
+              style={{ background: 'rgba(239,68,68,0.08)', color: '#ef4444' }}
             >
-              <LogOut size={20} />
+              <LogOut size={19} />
               {signingOut ? 'Signing out…' : 'Sign out'}
             </button>
           </div>

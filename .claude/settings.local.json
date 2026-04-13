@@ -1,0 +1,32 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls e:/Applications/SpendMapr/*.json e:/Applications/SpendMapr/*.env* e:/Applications/SpendMapr/*.config.* e:/Applications/SpendMapr/vite.config.*)",
+      "Bash(ls e:/Applications/SpendMapr/.env*)",
+      "Bash(npx tsc:*)",
+      "Bash(echo \"Exit: $?\")",
+      "Bash(gh run:*)",
+      "Bash(supabase --version)",
+      "Bash(supabase projects:*)",
+      "Bash(npm run:*)",
+      "Bash(grep -l \"wgmcyxvtaxjhuzhxydoc\" e:/Applications/SpendMapr/dist/assets/*.js)",
+      "Bash(where gh.exe)",
+      "Bash(powershell -Command \"Get-Command gh -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source\")",
+      "Bash(curl -s 'https://api.github.com/repos/adeth0/spendmapr/actions/runs?per_page=3' -H 'Accept: application/vnd.github+json')",
+      "Bash(python3 -c ':*)",
+      "Bash(curl -s \"https://api.github.com/repos/adeth0/spendmapr/actions/runs?per_page=3\" -H \"Accept: application/vnd.github+json\")",
+      "Bash(node -e \"const d=require\\('fs'\\).readFileSync\\('/dev/stdin','utf8'\\); const runs=JSON.parse\\(d\\).workflow_runs; runs.slice\\(0,3\\).forEach\\(r=>console.log\\(r.created_at, r.status, r.conclusion, r.head_sha.slice\\(0,7\\)\\)\\)\")",
+      "Bash(curl -s \"https://api.github.com/repos/adeth0/spendmapr/actions/runs?per_page=3\" -H \"Accept: application/vnd.github+json\" -o C:/Temp/gh_runs.json)",
+      "Bash(node -e \"const d=require\\('fs'\\).readFileSync\\('C:/Temp/gh_runs.json','utf8'\\); const runs=JSON.parse\\(d\\).workflow_runs; runs.slice\\(0,3\\).forEach\\(r=>console.log\\(r.created_at, r.status, r.conclusion, r.head_sha.slice\\(0,7\\)\\)\\)\")",
+      "Bash(mkdir -p /tmp)",
+      "Bash(curl -s \"https://api.github.com/repos/adeth0/spendmapr/actions/runs?per_page=3\" -H \"Accept: application/vnd.github+json\" -o /tmp/gh_runs.json)",
+      "Bash(node -e \"const d=require\\('fs'\\).readFileSync\\('/tmp/gh_runs.json','utf8'\\); const runs=JSON.parse\\(d\\).workflow_runs; runs.slice\\(0,3\\).forEach\\(r=>console.log\\(r.created_at, r.status, r.conclusion, r.head_sha.slice\\(0,7\\)\\)\\)\")",
+      "Bash(node -e \"const d=require\\('fs'\\).readFileSync\\('e:/Applications/SpendMapr/gh_runs.json','utf8'\\); const runs=JSON.parse\\(d\\).workflow_runs; runs.slice\\(0,3\\).forEach\\(r=>console.log\\(r.created_at, r.status, r.conclusion, r.head_sha.slice\\(0,7\\)\\)\\)\")",
+      "WebFetch(domain:spend.kavauralabs.com)",
+      "WebFetch(domain:supabase.com)",
+      "Bash(echo \"EXIT:$?\")",
+      "Bash(node -e \"const p=require\\('./package.json'\\); const d={...p.dependencies,...p.devDependencies}; ['recharts','d3','victory','chart.js'].forEach\\(k=>console.log\\(k,':', d[k]||'not installed'\\)\\)\")",
+      "Bash(node -e \"const p=require\\('./package.json'\\); console.log\\('react-router-dom:', p.dependencies['react-router-dom']\\); console.log\\('tailwindcss:', p.devDependencies['tailwindcss']\\)\")"
+    ]
+  }
+}
