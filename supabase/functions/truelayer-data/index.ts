@@ -81,19 +81,16 @@ Deno.serve(async (req: Request) => {
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) return json({ error: 'Missing Authorization header' }, 401);
 
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_ANON_KEY')!,
-      { global: { headers: { Authorization: authHeader } } },
-    );
+    const jwt = authHeader.replace(/^Bearer\s+/i, '');
 
-    const { data: { user }, error: userErr } = await supabase.auth.getUser();
-    if (userErr || !user) return json({ error: 'Unauthorized' }, 401);
-
+    // Use service-role client so auth.getUser() works regardless of anon key format
     const admin = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     );
+
+    const { data: { user }, error: userErr } = await admin.auth.getUser(jwt);
+    if (userErr || !user) return json({ error: 'Unauthorized' }, 401);
 
     const clientId     = Deno.env.get('TRUELAYER_CLIENT_ID')!;
     const clientSecret = Deno.env.get('TRUELAYER_CLIENT_SECRET')!;

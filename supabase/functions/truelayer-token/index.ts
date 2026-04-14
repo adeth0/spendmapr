@@ -36,13 +36,15 @@ Deno.serve(async (req: Request) => {
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) return json({ error: 'Missing Authorization header' }, 401);
 
-    const supabase = createClient(
+    const jwt = authHeader.replace(/^Bearer\s+/i, '');
+
+    // Use service-role client so auth.getUser() works regardless of anon key format
+    const admin = createClient(
       Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_ANON_KEY')!,
-      { global: { headers: { Authorization: authHeader } } },
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     );
 
-    const { data: { user }, error: userErr } = await supabase.auth.getUser();
+    const { data: { user }, error: userErr } = await admin.auth.getUser(jwt);
     if (userErr || !user) return json({ error: 'Unauthorized' }, 401);
 
     // ── Validate body ─────────────────────────────────────────────────────────
@@ -93,11 +95,6 @@ Deno.serve(async (req: Request) => {
     const expiresAt = new Date(Date.now() + tokens.expires_in * 1_000).toISOString();
 
     // ── Persist tokens using service role (bypasses RLS) ─────────────────────
-    const admin = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
-    );
-
     const { error: upsertErr } = await admin
       .from('truelayer_connections')
       .upsert(
